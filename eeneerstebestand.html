@@ -1,3 +1,97 @@
-Hier zette we iets neer
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Wim Hof Ademoefening</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+  #controls input { margin: 5px; }
+  #display { font-size: 2em; margin-top: 20px; }
+  #timer { font-size: 3em; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>Wim Hof Ademoefening</h1>
+<div id="controls">
+  <label>Inademen (sec): <input type="number" id="inhale" value="4" min="1"></label>
+  <label>Uitademen (sec): <input type="number" id="exhale" value="6" min="1"></label>
+  <label>Herhalingen: <input type="number" id="cycles" value="3" min="1"></label>
+  <button id="start">Start</button>
+  <button id="reset" disabled>Reset</button>
+</div>
+<div id="display"></div>
+<div id="timer"></div>
+<script>
+(function(){
+  const inhaleInput = document.getElementById('inhale');
+  const exhaleInput = document.getElementById('exhale');
+  const cyclesInput = document.getElementById('cycles');
+  const startBtn = document.getElementById('start');
+  const resetBtn = document.getElementById('reset');
+  const display = document.getElementById('display');
+  const timer = document.getElementById('timer');
+  let cycleCount = 0;
+  let phaseInterval = null;
+  let holdInterval = null;
+  let holdSeconds = 0;
 
-een extra zin
+  function runPhase(label, seconds, callback) {
+    display.textContent = label;
+    let remaining = seconds;
+    timer.textContent = remaining;
+    clearInterval(phaseInterval);
+    phaseInterval = setInterval(() => {
+      remaining--;
+      timer.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(phaseInterval);
+        callback();
+      }
+    }, 1000);
+  }
+
+  function startCycles() {
+    cycleCount = 0;
+    function next() {
+      if (cycleCount >= parseInt(cyclesInput.value, 10)) {
+        startHold();
+        return;
+      }
+      cycleCount++;
+      runPhase('Inademen', parseInt(inhaleInput.value, 10), () => {
+        runPhase('Uitademen', parseInt(exhaleInput.value, 10), next);
+      });
+    }
+    next();
+  }
+
+  function startHold() {
+    display.textContent = 'Houd je adem in';
+    holdSeconds = 0;
+    timer.textContent = holdSeconds;
+    holdInterval = setInterval(() => {
+      holdSeconds++;
+      timer.textContent = holdSeconds;
+    }, 1000);
+    resetBtn.disabled = false;
+  }
+
+  function reset() {
+    clearInterval(phaseInterval);
+    clearInterval(holdInterval);
+    display.textContent = '';
+    timer.textContent = '';
+    resetBtn.disabled = true;
+  }
+
+  startBtn.addEventListener('click', () => {
+    reset();
+    resetBtn.disabled = true;
+    startCycles();
+  });
+
+  resetBtn.addEventListener('click', reset);
+})();
+</script>
+</body>
+</html>
