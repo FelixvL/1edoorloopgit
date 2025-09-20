@@ -1,7 +1,12 @@
+"""Utilities for determining StudyTube categories."""
+
+from __future__ import annotations
+
 import re
 from collections import defaultdict
+from typing import Iterable, List
 
-# --- 1) De StudyTube-taxonomie zoals jij 'm gaf, per hoofdcategorie ---
+# --- 1) De StudyTube-taxonomie zoals in de oorspronkelijke POC ---
 CATEGORY_BLOCKS = {
     "Arbo & Veiligheid": """Arbo & Veiligheid, AED & Reanimatie, ATEX, Arbo, Arbowetgeving, Asbest, BHV, BOA - Buitengewoon Opsporings Ambtenaar,
 Beveiliging, Brandveiligheid, Crisis coördinator, DLP, EHBO, Facilitair, Flensmonteur, Gassen, HVK, Hijsen,
@@ -29,7 +34,8 @@ Microsoft Windows PowerShell, Microsoft Word, Microsoft netwerk, Mobile developm
 Netwerkmanagement, ONTAP, OO (Object Oriented) Programmeren, OO (Object Oriented) Programmeren, OpenOffice.org, Oracle, PHP,
 Primavera, Programmeren, Python, RES, Rational Unified Process (RUP), Requirement Engineering, SAP, SAP Crystal Reports, SPSS, SQL Server,
 Salesforce, Secure Programming, Selenium, Service Management, Service Oriented Architecture (SOA), Software Development, Software testing,
-Softwarearchitectuur, Spring, Systeembeheer, System Center Configuration Manager (SCCM), TCP/IP, TMap, TOGAF, Technisch Beheer, UML, Unix,
+Softwarearchitectuur, Spring, Systeembeheer, System Center Configuration Manager (SCCM), TCP/IP, TMap, TOGAF, Technisch Beheer,
+UML, Unix,
 VBA (Microsoft Office), VMware, Virtualisatie, VoIP, Watchguard Fireware, Windows Server, Word, iEXA""",
 
     "Communicatie": """Communicatie, Adviesvaardigheden, Argumenteren, Beïnvloeden, Commercieel schrijven, Communicatietechnieken, Communiceren, Copywriting,
@@ -46,7 +52,8 @@ WFT, WMO Consulent""",
     "Hobby & Vrije Tijd": """Hobby & Vrije Tijd""",
 
     "HR": """HR, Arbeidsmarktcommunicatie, Assessment, Burn-out preventie, Casemanagement, Competentiemanagement, Duurzame inzetbaarheid, E-HRM, Functionerings - & beoordelingsgesprekken,
-HR-advies, HR-beleid, HRM, Het nieuwe werken, Intercedent, Interviewtechnieken, Loopbaancoaching & advies, Medezeggenschap, OR, P&O / P&A, Personeelsmanagement,
+HR-advies, HR-beleid, HRM, Het nieuwe werken, Intercedent, Interviewtechnieken, Loopbaancoaching & advies, Medezeggenschap, OR,
+P&O / P&A, Personeelsmanagement,
 Personeelsplanning, Personeelszaken, Recruitment, Reorganisatie, Reïntegratie, Slecht nieuws gesprekken, Sollicitatiegesprek, Solliciteren, Talentmanagement,
 Vertrouwenspersoon, Verzuim, Werkgeluk, Werving & selectie, Wet Werk en Zekerheid (WWZ)""",
 
@@ -68,7 +75,8 @@ Verbintenissenrecht / Contractrecht, Vreemdelingenrecht, Werkgeversaansprakelijk
 
     "Kwaliteit & Projectmanagement": """Kwaliteit & Projectmanagement, Agile, Allergenen, Business Case Management, Business Process Management (BPM), Design thinking, Crisismanagement, HACCP,
 IPMA, IREB, ISO, ITIL, Auditing, Kwaliteitsmanagement, Lean, Lean Six Sigma, PRINCE2, Performance Management, Planning, Procesmanagement, Programmamanagement,
-Projectleider, Project assistent, Projectmanagement, Projectmatig werken, Projectmedewerker, Riskmanagement, Scrum, Statistiek, Voedselveiligheid""",
+Projectleider, Project assistent, Projectmanagement, Projectmatig werken, Projectmedewerker, Riskmanagement, Scrum, Statistiek,
+Voedselveiligheid""",
 
     "Management": """Management, Big Data, Branding, Bedrijfskunde, Besluitvorming, Bestuurskunde, Content Marketing, Business development, Coachend leidinggeven, Coaching, DISC, Eventmanagement,
 Finance voor niet-financiële manager, Governance, Innovatiemanagement, Hospitality, International business, Kennismanagement, Leiderschap, Leidinggeven, MBA, Management,
@@ -119,44 +127,43 @@ WMO, Zorg en Welzijn, Zorgmanagement, Activiteitenbegeleider, Schuldhulpverlenin
     "Ondernemingsraad": "",
 }
 
-CATEGORY_PRIORITY = [
-    # optioneel: bepaalt tie-breakers (bovenaan = voorkeur)
+CATEGORY_PRIORITY: List[str] = [
     "Automatisering & ICT/IT", "Internet & Media", "Management", "Kwaliteit & Projectmanagement",
     "HR", "Financieel", "Marketing", "Communicatie", "Inkoop & Logistiek", "Opleiding & Onderwijs",
     "Productie, Techniek & Bouw", "Sales", "Secretarieel & Administratief", "Sport & Vitaliteit",
     "Taalcursus", "Vastgoed & Makelaardij", "Zorg & Verzorging", "Hobby & Vrije Tijd",
     "NL Leert Door", "Kinderopvang", "Persoonlijke Ontwikkeling", "Persoen in zicht (PIZ)", "Ondernemingsraad",
-    "Overig"
+    "Overig",
 ]
 
 _WORD_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+#")
 
+
 def _contains_term(block: str, term: str) -> bool:
-    """Case-insensitive substring met 'woordgrenzen' (geen letters/cijfers direct ernaast)."""
+    """Return True when *term* occurs as a standalone word in *block*."""
     if not block or not term:
         return False
     b = block.lower()
     t = term.lower().strip()
     i = b.find(t)
     while i != -1:
-        before = b[i-1] if i > 0 else ""
-        after  = b[i+len(t)] if i + len(t) < len(b) else ""
+        before = b[i - 1] if i > 0 else ""
+        after = b[i + len(t)] if i + len(t) < len(b) else ""
         if (before == "" or before not in _WORD_CHARS) and (after == "" or after not in _WORD_CHARS):
             return True
-        i = b.find(t, i+1)
+        i = b.find(t, i + 1)
     return False
 
-def choose_category_from_subcats(subcats):
-    """Bepaal beste StudyTube-hoofdcategorie op basis van een lijst subcategorieën."""
-    # 1) Exacte match op categorienaam wint
-    sub_norm = [s.strip() for s in subcats if s and s.strip()]
+
+def choose_category_from_subcats(subcats: Iterable[str]) -> str:
+    """Determine the best StudyTube category for the supplied *subcats*."""
+    sub_norm: List[str] = [s.strip() for s in subcats if s and s.strip()]
     cat_names_lower = {c.lower(): c for c in CATEGORY_BLOCKS.keys()}
     for s in sub_norm:
         key = s.lower()
         if key in cat_names_lower:
             return cat_names_lower[key]
 
-    # 2) Score per categorie o.b.v. aantal hits
     scores = defaultdict(int)
     for s in sub_norm:
         for cat, block in CATEGORY_BLOCKS.items():
@@ -164,14 +171,13 @@ def choose_category_from_subcats(subcats):
                 scores[cat] += 1
 
     if scores:
-        # beste score, bij gelijk: volgorde volgens CATEGORY_PRIORITY
         best = max(
             scores.items(),
-            key=lambda kv: (kv[1], -(CATEGORY_PRIORITY.index(kv[0]) if kv[0] in CATEGORY_PRIORITY else 10_000))
+            key=lambda kv: (
+                kv[1],
+                -(CATEGORY_PRIORITY.index(kv[0]) if kv[0] in CATEGORY_PRIORITY else 10_000),
+            ),
         )
         return best[0]
 
-    # 3) Geen match: Overig
     return "Overig"
-
-
