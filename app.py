@@ -12,7 +12,6 @@ from data_poc_v2 import algemeen as data_service
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route("/studytube_courses_van_eduframe_naar_bestand")
 def studytube_courses_van_eduframe_naar_bestand():
     """Synchronise StudyTube courses from Eduframe to disk."""

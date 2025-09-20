@@ -16,12 +16,12 @@ import requests
 from flask import Response, abort, jsonify, request
 
 from . import categorie_selector
-
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 EDUFRAME_BASE = "https://api.eduframe.nl/api/v1"
-EDUFRAME_TOKEN = "qq"  # test token supplied in the original proof of concept
+EDUFRAME_TOKEN = "XLOz866fKcn7sedj0I-mu72oaZ_wxIwwqXEJx-g7v4w"  # test token supplied in the original proof of concept
 PER_PAGE = 100
 
 DATA_DIR = Path("data_poc_v2")
@@ -734,7 +734,7 @@ def run_batch_update(
     )
     return (
         "Batch klaar: {calls} calls gedaan. Volgende start: index={next_index} (course_id={next_course_id})."
-        "<h1>roep deze pas over 5 minuten aan, dus na: {timestamp}</h1>"
+        "<h1>roep! deze pas over 5 minuten aan, dus na: {timestamp}</h1>"
     ).format(
         calls=calls,
         next_index=next_index,
