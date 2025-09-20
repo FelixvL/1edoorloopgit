@@ -1,9 +1,9 @@
 {
-  "saved_at": "2025-09-20T22:08:52",
+  "saved_at": "2025-09-21T01:21:15",
   "total_courses": 572,
-  "next_index": 0,
-  "next_course_id": 429,
-  "last_index_processed": 571,
-  "last_course_id": 19527,
+  "next_index": 128,
+  "next_course_id": 4359,
+  "last_index_processed": 127,
+  "last_course_id": 4349,
   "note": "Volgende run start bij next_index/course_id."
 }

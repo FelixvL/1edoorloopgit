@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 import requests
 from flask import Response, abort, jsonify, request
+import os
 
 from . import categorie_selector
 logging.basicConfig(level=logging.DEBUG)
@@ -21,19 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 EDUFRAME_BASE = "https://api.eduframe.nl/api/v1"
-EDUFRAME_TOKEN = "XLOz866fKcn7sedj0I-mu72oaZ_wxIwwqXEJx-g7v4w"  # test token supplied in the original proof of concept
+EDUFRAME_TOKEN = os.getenv("EDUFRAME_TOKEN")  # test token supplied in the original proof of concept
 PER_PAGE = 100
 
 DATA_DIR = Path("data_poc_v2")
 PLANNED_DIR = DATA_DIR / "planned_courses_poc_v2"
 COURSES_FILE = DATA_DIR / "courses_poc_v2.json"
 COURSE_VARIANTS_FILE = DATA_DIR / "course_variants.json"
-LEGACY_COURSES_FILES: Sequence[Path] = (Path("courses_poc_v1.json"),)
-LEGACY_PLANNED_DIRS: Sequence[Path] = (Path("planned_courses_poc_v1"),)
-LEGACY_VARIANT_FILES: Sequence[Path] = (
-    Path("course_variants.json"),
-    Path("data_poc_v1/course_variants.json"),
-)
+
 
 PROGRESS_PATH = Path("voortgang_eduframe_update.txt")
 BASE_JSON_DIR = Path(".").resolve()
@@ -77,9 +73,6 @@ class CacheManager:
     planned_dir: Path = PLANNED_DIR
     courses_file: Path = COURSES_FILE
     course_variants_file: Path = COURSE_VARIANTS_FILE
-    legacy_courses_files: Sequence[Path] = field(default_factory=lambda: LEGACY_COURSES_FILES)
-    legacy_planned_dirs: Sequence[Path] = field(default_factory=lambda: LEGACY_PLANNED_DIRS)
-    legacy_variant_files: Sequence[Path] = field(default_factory=lambda: LEGACY_VARIANT_FILES)
     _variant_lookup_cache: Optional[Dict[int, str]] = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:  # pragma: no cover - trivial
@@ -101,7 +94,7 @@ class CacheManager:
 
     def load_courses(self) -> List[dict]:
         """Return cached course data, preferring the v2 location."""
-        for path in (self.courses_file, *self.legacy_courses_files):
+        for path in (self.courses_file,):
             if path.exists():
                 data = self.load_json(path)
                 if isinstance(data, dict):
@@ -116,7 +109,6 @@ class CacheManager:
     def load_planned_courses(self, course_id: int) -> List[dict]:
         """Return cached planned course data for a course, searching legacy folders if needed."""
         targets = [self.planned_dir / f"pc_{course_id}.json"]
-        targets.extend(directory / f"pc_{course_id}.json" for directory in self.legacy_planned_dirs)
         for path in targets:
             if path.exists():
                 data = self.load_json(path)
@@ -133,7 +125,7 @@ class CacheManager:
         return path
 
     def _resolve_variant_path(self) -> Optional[Path]:
-        for path in (self.course_variants_file, *self.legacy_variant_files):
+        for path in (self.course_variants_file,):
             if path.exists():
                 return path
         return None
