@@ -404,6 +404,10 @@ def map_variant_name_to_training_type(name: str) -> str:
     return "other"
 
 
+def _sanitize_course_code(raw_code: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]", "_", raw_code)
+
+
 def determine_training_type_for_course(
     planned: Iterable[dict],
     variant_lookup: Dict[int, str],
@@ -452,6 +456,105 @@ def determine_training_type_for_course(
     return best
 
 
+CLASSROOM_VARIANT_NAMES: Set[str] = {
+    "klassikaal",
+    "klassikaal, doorgangsgarantie",
+    "klassikaal (en)",
+    "klassikaal (en), doorgangsgarantie",
+    "wachtlijst, klassikaal",
+}
+
+VIRTUAL_VARIANT_NAMES: Set[str] = {
+    "virtueel",
+    "virtueel, doorgangsgarantie",
+    "virtueel (en)",
+    "virtueel (en), doorgangsgarantie",
+    "wachtlijst, virtueel",
+}
+
+
+@dataclass
+class CourseProductVariant:
+    code: str
+    planned_courses: List[dict]
+    training_type: str
+
+
+def determine_course_product_variants(
+    *,
+    base_code: str,
+    planned: List[dict],
+    variant_lookup: Dict[int, str],
+    default_training_type: str,
+) -> List[CourseProductVariant]:
+    today = date.today()
+    sanitized_base_code = _sanitize_course_code(base_code)
+
+    def is_future_course(pc: dict) -> bool:
+        start_date = pc.get("start_date")
+        if not start_date:
+            return False
+        try:
+            planned_date = date.fromisoformat(start_date)
+        except (TypeError, ValueError):
+            return False
+        return planned_date > today
+
+    classroom_courses: List[dict] = []
+    virtual_courses: List[dict] = []
+    classroom_has_future = False
+    virtual_has_future = False
+
+    for pc in planned:
+        variant_id = pc.get("course_variant_id")
+        variant_name = ""
+        if variant_id is not None:
+            try:
+                variant_name = variant_lookup.get(int(variant_id), "") or ""
+            except (TypeError, ValueError):
+                variant_name = ""
+        normalized = variant_name.strip().lower()
+        if normalized in CLASSROOM_VARIANT_NAMES:
+            classroom_courses.append(pc)
+            if is_future_course(pc):
+                classroom_has_future = True
+            continue
+        if normalized in VIRTUAL_VARIANT_NAMES:
+            virtual_courses.append(pc)
+            if is_future_course(pc):
+                virtual_has_future = True
+            continue
+
+    if classroom_has_future and virtual_has_future:
+        return [
+            CourseProductVariant(
+                code=sanitized_base_code,
+                planned_courses=classroom_courses,
+                training_type="classroom_training",
+            ),
+            CourseProductVariant(
+                code=_sanitize_course_code(f"{sanitized_base_code}-VR"),
+                planned_courses=virtual_courses,
+                training_type="virtual_classroom",
+            ),
+        ]
+
+    if classroom_has_future:
+        training_type = "classroom_training"
+    elif virtual_has_future:
+        training_type = "virtual_classroom"
+    else:
+        training_type = default_training_type
+
+    return [
+        CourseProductVariant(
+            code=sanitized_base_code,
+            planned_courses=list(planned),
+            training_type=training_type,
+        )
+    ]
+
+
 def xml_product_for_course(
     course: dict,
     *,
@@ -462,8 +565,8 @@ def xml_product_for_course(
     variant_lookup = variant_lookup or cache_manager.get_variant_lookup()
 
     course_id = course.get("id")
-    code = "_" + str(course.get("code") or f"CRS-{course_id}")
-    code = re.sub(r"[^A-Za-z0-9_.-]", "_", code)
+    base_code = "_" + str(course.get("code") or f"CRS-{course_id}")
+    base_code = _sanitize_course_code(base_code)
     name = course.get("name") or ""
     description = description_from_course(course) or "10"
     price = course.get("starting_price") or course.get("cost") or ""
@@ -478,9 +581,9 @@ def xml_product_for_course(
 
     agenda_html = agenda_from_course(course)
     planned = cache_manager.load_planned_courses(int(course_id)) if course_id is not None else []
-    has_planned = len(planned) > 0
 
     variant_mapping = variant_lookup or {}
+    default_training_type = determine_training_type_for_course(planned, variant_mapping)
     today = date.today()
     per_variant: Dict[Optional[int], Dict[str, int]] = defaultdict(lambda: {"toekomst": 0, "verleden": 0, "vandaag": 0})
     for planned_course in planned:
@@ -519,64 +622,76 @@ def xml_product_for_course(
                     f"g {counts.get('verleden', 0)} "
                     f"v {counts.get('vandaag', 0)}"
                 )
-
-    schedule_type = "scheduled" if has_planned else "nodate"
-
-    parts: List[str] = []
-    ap = parts.append
-
-    ap("<Product>")
-    ap(f"<ID>{_cdata(code)}</ID>")
-    ap("<Name>")
-    ap(_cdata(name))
-    ap("</Name>")
-    ap("<Description>")
-    ap(_cdata(description))
-    ap("</Description>")
-    ap("<Agenda>")
-    ap(_cdata(agenda_html))
-    ap("</Agenda>")
-    ap(f"<Language>{language}</Language>")
-    ap(f"<TrainingPriceExVAT>{text_or_empty(price)}</TrainingPriceExVAT>")
-    ap("<VATPercentage>21</VATPercentage>")
-    ap("<Certificate>Certificaat opleider</Certificate>")
-    ap(f"<Category>{_cdata(category)}</Category>")
-    ap(f"<SubCategory>{_cdata(subcat)}</SubCategory>")
-    ap(f"<Duration>{text_or_empty(duration_value)}</Duration>")
-    ap(f"<DurationUnit>{duration_unit}</DurationUnit>")
     web = course.get("website_url") or "https://startel.nl/alle-trainingen/"
     session_url = "https://startel.nl/"
-    ap(f"<WebAddress>{_cdata(web)}</WebAddress>")
-    ap(f"<ScheduleType>{schedule_type}</ScheduleType>")
-    training_type = determine_training_type_for_course(planned, variant_mapping)
-    ap(f"<TrainingType>{training_type}</TrainingType>")
 
-    if has_planned:
-        ap("<LiveSessions>")
-        for pc in planned:
-            ap("<LiveSession>")
-            session_identifier = _cdata(f"pc-{pc.get('id')}")
-            ap(f"<ID>{session_identifier}</ID>")
-            ap(f"<Url>{_cdata(session_url)}</Url>")
-            if pc.get("min_participants") is not None:
-                ap(f"<MinimumParticipants>{pc.get('min_participants')}</MinimumParticipants>")
-            if pc.get("max_participants") is not None:
-                ap(f"<MaximumParticipants>{pc.get('max_participants')}</MaximumParticipants>")
-            ap(f"<LiveSessionClosed>{str(live_session_closed(pc)).lower()}</LiveSessionClosed>")
-            ap("<LiveSessionDates>")
-            ap("<LiveSessionDate>")
-            ap(f"<StartDate>{iso_date_or_empty(pc.get('start_date'))}</StartDate>")
-            ap("<StartTime>09:00</StartTime>")
-            ap("<EndTime>17:00</EndTime>")
-            ap("</LiveSessionDate>")
-            ap("</LiveSessionDates>")
-            ap("</LiveSession>")
-        ap("</LiveSessions>")
-    else:
-        ap("<LiveSessions> </LiveSessions>")
+    product_variants = determine_course_product_variants(
+        base_code=base_code,
+        planned=planned,
+        variant_lookup=variant_mapping,
+        default_training_type=default_training_type,
+    )
 
-    ap("</Product>")
-    return "\n".join(parts)
+    products_xml: List[str] = []
+    for variant in product_variants:
+        planned_for_variant = variant.planned_courses
+        has_planned_variant = len(planned_for_variant) > 0
+        schedule_type = "scheduled" if has_planned_variant else "nodate"
+
+        parts: List[str] = []
+        ap = parts.append
+
+        ap("<Product>")
+        ap(f"<ID>{_cdata(variant.code)}</ID>")
+        ap("<Name>")
+        ap(_cdata(name))
+        ap("</Name>")
+        ap("<Description>")
+        ap(_cdata(description))
+        ap("</Description>")
+        ap("<Agenda>")
+        ap(_cdata(agenda_html))
+        ap("</Agenda>")
+        ap(f"<Language>{language}</Language>")
+        ap(f"<TrainingPriceExVAT>{text_or_empty(price)}</TrainingPriceExVAT>")
+        ap("<VATPercentage>21</VATPercentage>")
+        ap("<Certificate>Certificaat opleider</Certificate>")
+        ap(f"<Category>{_cdata(category)}</Category>")
+        ap(f"<SubCategory>{_cdata(subcat)}</SubCategory>")
+        ap(f"<Duration>{text_or_empty(duration_value)}</Duration>")
+        ap(f"<DurationUnit>{duration_unit}</DurationUnit>")
+        ap(f"<WebAddress>{_cdata(web)}</WebAddress>")
+        ap(f"<ScheduleType>{schedule_type}</ScheduleType>")
+        ap(f"<TrainingType>{variant.training_type}</TrainingType>")
+
+        if has_planned_variant:
+            ap("<LiveSessions>")
+            for pc in planned_for_variant:
+                ap("<LiveSession>")
+                session_identifier = _cdata(f"pc-{pc.get('id')}")
+                ap(f"<ID>{session_identifier}</ID>")
+                ap(f"<Url>{_cdata(session_url)}</Url>")
+                if pc.get("min_participants") is not None:
+                    ap(f"<MinimumParticipants>{pc.get('min_participants')}</MinimumParticipants>")
+                if pc.get("max_participants") is not None:
+                    ap(f"<MaximumParticipants>{pc.get('max_participants')}</MaximumParticipants>")
+                ap(f"<LiveSessionClosed>{str(live_session_closed(pc)).lower()}</LiveSessionClosed>")
+                ap("<LiveSessionDates>")
+                ap("<LiveSessionDate>")
+                ap(f"<StartDate>{iso_date_or_empty(pc.get('start_date'))}</StartDate>")
+                ap("<StartTime>09:00</StartTime>")
+                ap("<EndTime>17:00</EndTime>")
+                ap("</LiveSessionDate>")
+                ap("</LiveSessionDates>")
+                ap("</LiveSession>")
+            ap("</LiveSessions>")
+        else:
+            ap("<LiveSessions> </LiveSessions>")
+
+        ap("</Product>")
+        products_xml.append("\n".join(parts))
+
+    return "\n".join(products_xml)
 
 
 def build_products_xml(
