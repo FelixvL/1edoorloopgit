@@ -17,9 +17,9 @@ from flask import Response, abort, jsonify, request
 import os
 
 from . import categorie_selector
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
+logging.basicConfig(level=logging.DEBUG) # weghalen indien geen logging gewenst
+logger = logging.getLogger(__name__)
 
 EDUFRAME_BASE = "https://api.eduframe.nl/api/v1"
 EDUFRAME_TOKEN = os.getenv("EDUFRAME_TOKEN")  # test token supplied in the original proof of concept
