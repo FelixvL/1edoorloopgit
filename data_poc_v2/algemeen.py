@@ -18,7 +18,7 @@ import os
 
 from . import categorie_selector
 
-logging.basicConfig(level=logging.DEBUG) # weghalen indien geen logging gewenst
+# logging.basicConfig(level=logging.DEBUG) # weghalen indien geen logging gewenst
 logger = logging.getLogger(__name__)
 
 EDUFRAME_BASE = "https://api.eduframe.nl/api/v1"
@@ -497,6 +497,7 @@ def xml_product_for_course(
             per_variant[variant_id]["vandaag"] += 1
 
     if per_variant:
+#        print(">>>>>", per_variant)
         logger.debug(
             "Course %s (%s) varianten: %s",
             course.get("id"),
@@ -506,6 +507,18 @@ def xml_product_for_course(
                 for k, v in per_variant.items()
             },
         )
+        if len(planned) > 3 and len(planned) < 6:
+            print("\n >>>",len(planned), " >> ", course.get("id"), "-", course.get("name"))
+            for variant, counts in {
+                variant_mapping.get(k, f"id {k}"): v
+                for k, v in per_variant.items()
+            }.items():
+                print(
+                    f"{variant.lower()} - "
+                    f"f {counts.get('toekomst', 0)} "
+                    f"g {counts.get('verleden', 0)} "
+                    f"v {counts.get('vandaag', 0)}"
+                )
 
     schedule_type = "scheduled" if has_planned else "nodate"
 
