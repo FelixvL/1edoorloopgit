@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 *.DS_Store
 .env
+data_poc_v2/planned_courses_poc_v2/**
