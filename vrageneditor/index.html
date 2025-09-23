@@ -1,0 +1,161 @@
+<html>
+    <head>
+         <link rel="stylesheet" href="../aitutor.css">
+
+    </head>
+    <body>
+    <div class="container">
+        <h1>Vrageneditor</h1>
+        Opleidingsnr: <input id="opleidingsnr" disabled><br>
+        <select id="vraagsoort">
+            <option>meerkeuze</option>
+            <option>invulvraag</option>
+            <option>true or false</option>
+        </select>
+        <select id="niveau">
+            <option>makkelijk</option>
+            <option>gemiddeld</option>
+            <option>moeilijk</option>
+        </select>
+        <button onclick="maakvraagaan()" id="maakvraagknop">verzin nieuwe vraag</button>
+
+        <h2>Vraag</h2>
+        <textarea id="vraag" cols="150" rows="6"></textarea>
+        <br><br>
+        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox><button>v</button><br>
+        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox><button>^</button><button>v</button><br>
+        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox><button>^</button><button>v</button><br>
+        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox><button>^</button>
+        <textarea id="toelichting" cols="150" rows="6"></textarea>
+        <input hidden id="juistantwoord">
+        <div id="toelichtingsdiv">
+            <h2>Feedback op vraag</h2>
+            <textarea id="verzoektotwijziging"></textarea><br>
+            <button onclick="wijzigvraag()" id="wijzigvraagknop">wijzig vraag</button>
+            <button onclick="slavraagop()">sla vraag definitief op</button>
+        </div>
+        <h2>Alle Vragen</h2>
+        <div id="allevragendiv"></div>
+    </div>
+        <script src="../aitutor.js"></script>
+        <script>
+            let opleidingsnr = new URLSearchParams(window.location.search).get("opleidingsnummer");
+            fetch(server+"/get_opleidingnaam_via_id/"+opleidingsnr)
+            .then(r=>r.text())
+            .then(d=>document.getElementById("opleidingsnr").value = d)
+            fetch(server+"/haal_alle_vragen_op/"+opleidingsnr)
+            .then(r=>r.text())
+            .then(d=>toonallevragenvanopleiding(d))
+            document.getElementById("toelichtingsdiv").hidden = true;
+            function maakvraagaan(){
+                verzendObject = {}
+                verzendObject.opleidingsnr = document.getElementById("opleidingsnr").value;
+                verzendObject.opleidingsid = opleidingsnr;
+                verzendObject.vraagsoort = document.getElementById("vraagsoort").value;
+                verzendObject.niveau = document.getElementById("niveau").value;
+
+                verzendObject = JSON.stringify(verzendObject);
+                document.getElementById("maakvraagknop").innerHTML = 'wacht op antwoord';
+                document.getElementById("maakvraagknop").disabled = true;
+
+                post_fetch("/maaknieuwevraagaan",verzendObject, verwerkmaakvraagaan);
+            }
+            function verwerkmaakvraagaan(data){
+                console.log("maak vraag aan: ", data)
+                document.getElementById("toelichtingsdiv").hidden = false;
+                document.getElementById("maakvraagknop").disabled = false;
+                document.getElementById("maakvraagknop").innerHTML = 'verzin nieuwe vraag';
+                document.getElementById("antwoorda").style.backgroundColor = "white";
+                document.getElementById("antwoordb").style.backgroundColor = "white";
+                document.getElementById("antwoordc").style.backgroundColor = "white";
+                document.getElementById("antwoordd").style.backgroundColor = "white";
+                document.getElementById("vraag").value = data.vraag;
+                document.getElementById("antwoorda").value = data.antwoorda;
+                document.getElementById("antwoordb").value = data.antwoordb;
+                document.getElementById("antwoordc").value = data.antwoordc;
+                document.getElementById("antwoordd").value = data.antwoordd;
+                document.getElementById("juistantwoord").value = data.juistantwoord;
+                document.getElementById("toelichting").value = data.toelichting;
+                document.getElementById("antwoord"+data.juistantwoord).style.backgroundColor = "lightgreen";
+                document.getElementById("checkbox"+data.juistantwoord).checked = true;
+            }
+            function slavraagop(){
+                console.log("sla vraag op")
+                let verzendObject = {}
+                verzendObject.opleidingsnr  = opleidingsnr;
+                verzendObject.vraagsoort    = document.getElementById("vraagsoort").value;
+                verzendObject.niveau        = document.getElementById("niveau").value;
+                verzendObject.juistantwoord = document.getElementById("juistantwoord").value;
+                verzendObject.vraag         = document.getElementById("vraag").value;
+                verzendObject.antwoorda     = document.getElementById("antwoorda").value;
+                verzendObject.antwoordb     = document.getElementById("antwoordb").value;
+                verzendObject.antwoordc     = document.getElementById("antwoordc").value;
+                verzendObject.antwoordd     = document.getElementById("antwoordd").value;
+                verzendObject.toelichting   = document.getElementById("toelichting").value;
+                verzendObject = JSON.stringify(verzendObject);
+                post_fetch("/slavraagop",verzendObject, verwerkslavraagop);
+            }
+            function verwerkslavraagop(data){
+                alert("opgeslagen");
+                window.location = window.location;
+                console.log("slavraagop", data);
+            }
+            function toonallevragenvanopleiding(allevragen){
+//                console.log(allevragen)
+                allevragen = JSON.parse(allevragen);
+                    const lijstDiv = document.getElementById('allevragendiv');
+    lijstDiv.innerHTML = '';
+    allevragen.forEach((vraag, index) => {
+        const card = document.createElement('div');
+        // neem de tekst van de correcte optie uit vraag.correct_antwoord
+        const correct = vraag.correct_antwoord;
+        card.innerHTML = `
+          <hr>
+          <details>
+          <summary><strong>${vraag.vraag}</strong> - <button onclick=verwijdervraag(${vraag.id})>verwijder</button></summary>
+          <p class="${"a" === correct ? 'correct-answer' : ''}">a) ${vraag.antwoorda}</p>
+          <p class="${"b" === correct ? 'correct-answer' : ''}">b) ${vraag.antwoordb}</p>
+          <p class="${"c" === correct ? 'correct-answer' : ''}">c) ${vraag.antwoordc}</p>
+          <p class="${"d" === correct ? 'correct-answer' : ''}">d) ${vraag.antwoordd}</p>
+          <h5>Toelichting:</h5>
+          <div class="explanation">${vraag.toelichting || ''}</div>
+          </details>
+        `;
+      lijstDiv.appendChild(card);
+    });
+            }
+            function wijzigvraag(){
+                document.getElementById("wijzigvraagknop").disabled = true;
+                let verzendObject = {}
+                verzendObject.opleidingsnr  = opleidingsnr;
+                verzendObject.vraagsoort    = document.getElementById("vraagsoort").value;
+                verzendObject.niveau        = document.getElementById("niveau").value;
+                verzendObject.juistantwoord = document.getElementById("juistantwoord").value;
+                verzendObject.vraag         = document.getElementById("vraag").value;
+                verzendObject.antwoorda     = document.getElementById("antwoorda").value;
+                verzendObject.antwoordb     = document.getElementById("antwoordb").value;
+                verzendObject.antwoordc     = document.getElementById("antwoordc").value;
+                verzendObject.antwoordd     = document.getElementById("antwoordd").value;
+                verzendObject.toelichting   = document.getElementById("toelichting").value;
+                verzendObject.verzoektotwijziging   = document.getElementById("verzoektotwijziging").value;
+                verzendObject = JSON.stringify(verzendObject);
+                document.getElementById("wijzigvraagknop").innerHTML = 'wacht op antwoord';
+                post_fetch("/wijzig_vraag",verzendObject, verwerkwijzigvraag);
+            }
+            function verwijdervraag(vraagid){
+                console.log("verwijder vraag", vraagid);
+                fetch(server+"/verwijder_vraag/"+vraagid)
+                .then(r=>window.location = window.location)
+            }
+            function verwerkwijzigvraag(data){
+                console.log("verwerkwijzigvraag",data)
+                document.getElementById("wijzigvraagknop").disabled = false;
+                document.getElementById("wijzigvraagknop").innerHTML = 'wijzig vraag';
+                verwerkmaakvraagaan(data);
+            }
+        </script>
+    </body>
+</html>
+
+
+
