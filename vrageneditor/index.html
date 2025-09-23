@@ -22,10 +22,10 @@
         <h2>Vraag</h2>
         <textarea id="vraag" cols="150" rows="6"></textarea>
         <br><br>
-        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox onclick="setCorrectAnswer('a')"><button type="button" onclick="moveAnswer('a','down')">v</button><br>
-        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox onclick="setCorrectAnswer('b')"><button type="button" onclick="moveAnswer('b','up')">^</button><button type="button" onclick="moveAnswer('b','down')">v</button><br>
-        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox onclick="setCorrectAnswer('c')"><button type="button" onclick="moveAnswer('c','up')">^</button><button type="button" onclick="moveAnswer('c','down')">v</button><br>
-        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox onclick="setCorrectAnswer('d')"><button type="button" onclick="moveAnswer('d','up')">^</button>
+        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox onclick="toggleCorrectAnswer('a')"><button type="button" onclick="moveAnswer('a','down')">v</button><br>
+        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox onclick="toggleCorrectAnswer('b')"><button type="button" onclick="moveAnswer('b','up')">^</button><button type="button" onclick="moveAnswer('b','down')">v</button><br>
+        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox onclick="toggleCorrectAnswer('c')"><button type="button" onclick="moveAnswer('c','up')">^</button><button type="button" onclick="moveAnswer('c','down')">v</button><br>
+        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox onclick="toggleCorrectAnswer('d')"><button type="button" onclick="moveAnswer('d','up')">^</button>
         <textarea id="toelichting" cols="150" rows="6"></textarea>
         <input hidden id="juistantwoord">
         <div id="toelichtingsdiv">
@@ -68,36 +68,51 @@
                 currentCheckbox.checked = targetCheckbox.checked;
                 targetCheckbox.checked = tempChecked;
 
-                updateCorrectAnswerFromCheckbox();
+                syncCorrectAnswers();
             }
-            function setCorrectAnswer(letter){
-                const validLetter = answerLetters.includes(letter);
-                answerLetters.forEach(l => {
-                    const checkbox = document.getElementById('checkbox'+l);
-                    const input = document.getElementById('antwoord'+l);
-                    if(validLetter && l === letter){
-                        checkbox.checked = true;
+            function toggleCorrectAnswer(letter){
+                if(!answerLetters.includes(letter)){
+                    return;
+                }
+                syncCorrectAnswers();
+            }
+            function syncCorrectAnswers(){
+                const selectedLetters = [];
+                answerLetters.forEach(letter => {
+                    const checkbox = document.getElementById('checkbox'+letter);
+                    const input = document.getElementById('antwoord'+letter);
+                    if(checkbox.checked){
                         input.style.backgroundColor = 'lightgreen';
+                        selectedLetters.push(letter);
                     }else{
-                        checkbox.checked = false;
                         input.style.backgroundColor = 'white';
                     }
                 });
-                document.getElementById('juistantwoord').value = validLetter ? letter : '';
+                document.getElementById('juistantwoord').value = selectedLetters.join(',');
             }
-            function updateCorrectAnswerFromCheckbox(){
-                let selectedLetter = '';
+            function parseCorrectAnswerLetters(correctValue){
+                const selectedSet = new Set();
+                if(Array.isArray(correctValue)){
+                    correctValue.forEach(letter => {
+                        if(answerLetters.includes(letter)){
+                            selectedSet.add(letter);
+                        }
+                    });
+                }else if(typeof correctValue === 'string'){
+                    const matches = correctValue.match(/[a-d]/g);
+                    if(matches){
+                        matches.forEach(letter => selectedSet.add(letter));
+                    }
+                }
+                return selectedSet;
+            }
+            function applyCorrectAnswers(correctValue){
+                const selectedSet = parseCorrectAnswerLetters(correctValue);
                 answerLetters.forEach(letter => {
                     const checkbox = document.getElementById('checkbox'+letter);
-                    if(selectedLetter === '' && checkbox.checked){
-                        selectedLetter = letter;
-                    }
+                    checkbox.checked = selectedSet.has(letter);
                 });
-                if(selectedLetter !== ''){
-                    setCorrectAnswer(selectedLetter);
-                }else{
-                    setCorrectAnswer('');
-                }
+                syncCorrectAnswers();
             }
             function maakvraagaan(){
                 verzendObject = {}
@@ -122,9 +137,8 @@
                 document.getElementById("antwoordb").value = data.antwoordb;
                 document.getElementById("antwoordc").value = data.antwoordc;
                 document.getElementById("antwoordd").value = data.antwoordd;
-                document.getElementById("juistantwoord").value = data.juistantwoord;
                 document.getElementById("toelichting").value = data.toelichting;
-                setCorrectAnswer(data.juistantwoord);
+                applyCorrectAnswers(data.juistantwoord);
             }
             function slavraagop(){
                 console.log("sla vraag op")
@@ -154,16 +168,15 @@
     lijstDiv.innerHTML = '';
     allevragen.forEach((vraag, index) => {
         const card = document.createElement('div');
-        // neem de tekst van de correcte optie uit vraag.correct_antwoord
-        const correct = vraag.correct_antwoord;
+        const correctLetters = parseCorrectAnswerLetters(vraag.correct_antwoord);
         card.innerHTML = `
           <hr>
           <details>
           <summary><strong>${vraag.vraag}</strong> - <button onclick=verwijdervraag(${vraag.id})>verwijder</button></summary>
-          <p class="${"a" === correct ? 'correct-answer' : ''}">a) ${vraag.antwoorda}</p>
-          <p class="${"b" === correct ? 'correct-answer' : ''}">b) ${vraag.antwoordb}</p>
-          <p class="${"c" === correct ? 'correct-answer' : ''}">c) ${vraag.antwoordc}</p>
-          <p class="${"d" === correct ? 'correct-answer' : ''}">d) ${vraag.antwoordd}</p>
+          <p class="${correctLetters.has('a') ? 'correct-answer' : ''}">a) ${vraag.antwoorda}</p>
+          <p class="${correctLetters.has('b') ? 'correct-answer' : ''}">b) ${vraag.antwoordb}</p>
+          <p class="${correctLetters.has('c') ? 'correct-answer' : ''}">c) ${vraag.antwoordc}</p>
+          <p class="${correctLetters.has('d') ? 'correct-answer' : ''}">d) ${vraag.antwoordd}</p>
           <h5>Toelichting:</h5>
           <div class="explanation">${vraag.toelichting || ''}</div>
           </details>
