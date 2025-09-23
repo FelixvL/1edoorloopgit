@@ -599,29 +599,28 @@ def xml_product_for_course(
         else:
             per_variant[variant_id]["vandaag"] += 1
 
-    if per_variant:
-#        print(">>>>>", per_variant)
-        logger.debug(
-            "Course %s (%s) varianten: %s",
-            course.get("id"),
-            course.get("name"),
-            {
-                variant_mapping.get(k, f"id {k}"): v
-                for k, v in per_variant.items()
-            },
-        )
-        if len(planned) > 3 and len(planned) < 6:
-            print("\n >>>",len(planned), " >> ", course.get("id"), "-", course.get("name"))
-            for variant, counts in {
-                variant_mapping.get(k, f"id {k}"): v
-                for k, v in per_variant.items()
-            }.items():
-                print(
-                    f"{variant.lower()} - "
-                    f"f {counts.get('toekomst', 0)} "
-                    f"g {counts.get('verleden', 0)} "
-                    f"v {counts.get('vandaag', 0)}"
-                )
+    # if per_variant:
+    #     logger.debug(
+    #         "Course %s (%s) varianten: %s",
+    #         course.get("id"),
+    #         course.get("name"),
+    #         {
+    #             variant_mapping.get(k, f"id {k}"): v
+    #             for k, v in per_variant.items()
+    #         },
+    #     )
+    #     if True:
+    #         print("\n >>>",len(planned), " >> ",course.get("code") , course.get("id"), "-", course.get("name"))
+    #         for variant, counts in {
+    #             variant_mapping.get(k, f"id {k}"): v
+    #             for k, v in per_variant.items()
+    #         }.items():
+    #             print(
+    #                 f"{variant.lower()} - "
+    #                 f"f {counts.get('toekomst', 0)} "
+    #                 f"g {counts.get('verleden', 0)} "
+    #                 f"v {counts.get('vandaag', 0)}"
+    #             )
     web = course.get("website_url") or "https://startel.nl/alle-trainingen/"
     session_url = "https://startel.nl/"
 
@@ -636,7 +635,13 @@ def xml_product_for_course(
     for variant in product_variants:
         planned_for_variant = variant.planned_courses
         has_planned_variant = len(planned_for_variant) > 0
+        display_name = name
+        if str(variant.code).endswith("-VR"):
+            display_name = f"{name} - virtuele training"
         schedule_type = "scheduled" if has_planned_variant else "nodate"
+        if variant.training_type == "exam" or variant.training_type == "elearning":
+            schedule_type = "nodate"
+            has_planned_variant = None
 
         parts: List[str] = []
         ap = parts.append
@@ -644,7 +649,7 @@ def xml_product_for_course(
         ap("<Product>")
         ap(f"<ID>{_cdata(variant.code)}</ID>")
         ap("<Name>")
-        ap(_cdata(name))
+        ap(_cdata(display_name))
         ap("</Name>")
         ap("<Description>")
         ap(_cdata(description))
