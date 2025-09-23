@@ -22,10 +22,10 @@
         <h2>Vraag</h2>
         <textarea id="vraag" cols="150" rows="6"></textarea>
         <br><br>
-        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox><button>v</button><br>
-        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox><button>^</button><button>v</button><br>
-        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox><button>^</button><button>v</button><br>
-        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox><button>^</button>
+        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox onclick="setCorrectAnswer('a')"><button type="button" onclick="moveAnswer('a','down')">v</button><br>
+        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox onclick="setCorrectAnswer('b')"><button type="button" onclick="moveAnswer('b','up')">^</button><button type="button" onclick="moveAnswer('b','down')">v</button><br>
+        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox onclick="setCorrectAnswer('c')"><button type="button" onclick="moveAnswer('c','up')">^</button><button type="button" onclick="moveAnswer('c','down')">v</button><br>
+        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox onclick="setCorrectAnswer('d')"><button type="button" onclick="moveAnswer('d','up')">^</button>
         <textarea id="toelichting" cols="150" rows="6"></textarea>
         <input hidden id="juistantwoord">
         <div id="toelichtingsdiv">
@@ -39,6 +39,7 @@
     </div>
         <script src="../aitutor.js"></script>
         <script>
+            const answerLetters = ['a','b','c','d'];
             let opleidingsnr = new URLSearchParams(window.location.search).get("opleidingsnummer");
             fetch(server+"/get_opleidingnaam_via_id/"+opleidingsnr)
             .then(r=>r.text())
@@ -47,6 +48,57 @@
             .then(r=>r.text())
             .then(d=>toonallevragenvanopleiding(d))
             document.getElementById("toelichtingsdiv").hidden = true;
+            function moveAnswer(letter, direction){
+                const currentIndex = answerLetters.indexOf(letter);
+                const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+                if (targetIndex < 0 || targetIndex >= answerLetters.length){
+                    return;
+                }
+                const targetLetter = answerLetters[targetIndex];
+                const currentInput = document.getElementById('antwoord'+letter);
+                const targetInput = document.getElementById('antwoord'+targetLetter);
+                const currentCheckbox = document.getElementById('checkbox'+letter);
+                const targetCheckbox = document.getElementById('checkbox'+targetLetter);
+
+                const tempValue = currentInput.value;
+                currentInput.value = targetInput.value;
+                targetInput.value = tempValue;
+
+                const tempChecked = currentCheckbox.checked;
+                currentCheckbox.checked = targetCheckbox.checked;
+                targetCheckbox.checked = tempChecked;
+
+                updateCorrectAnswerFromCheckbox();
+            }
+            function setCorrectAnswer(letter){
+                const validLetter = answerLetters.includes(letter);
+                answerLetters.forEach(l => {
+                    const checkbox = document.getElementById('checkbox'+l);
+                    const input = document.getElementById('antwoord'+l);
+                    if(validLetter && l === letter){
+                        checkbox.checked = true;
+                        input.style.backgroundColor = 'lightgreen';
+                    }else{
+                        checkbox.checked = false;
+                        input.style.backgroundColor = 'white';
+                    }
+                });
+                document.getElementById('juistantwoord').value = validLetter ? letter : '';
+            }
+            function updateCorrectAnswerFromCheckbox(){
+                let selectedLetter = '';
+                answerLetters.forEach(letter => {
+                    const checkbox = document.getElementById('checkbox'+letter);
+                    if(selectedLetter === '' && checkbox.checked){
+                        selectedLetter = letter;
+                    }
+                });
+                if(selectedLetter !== ''){
+                    setCorrectAnswer(selectedLetter);
+                }else{
+                    setCorrectAnswer('');
+                }
+            }
             function maakvraagaan(){
                 verzendObject = {}
                 verzendObject.opleidingsnr = document.getElementById("opleidingsnr").value;
@@ -65,10 +117,6 @@
                 document.getElementById("toelichtingsdiv").hidden = false;
                 document.getElementById("maakvraagknop").disabled = false;
                 document.getElementById("maakvraagknop").innerHTML = 'verzin nieuwe vraag';
-                document.getElementById("antwoorda").style.backgroundColor = "white";
-                document.getElementById("antwoordb").style.backgroundColor = "white";
-                document.getElementById("antwoordc").style.backgroundColor = "white";
-                document.getElementById("antwoordd").style.backgroundColor = "white";
                 document.getElementById("vraag").value = data.vraag;
                 document.getElementById("antwoorda").value = data.antwoorda;
                 document.getElementById("antwoordb").value = data.antwoordb;
@@ -76,8 +124,7 @@
                 document.getElementById("antwoordd").value = data.antwoordd;
                 document.getElementById("juistantwoord").value = data.juistantwoord;
                 document.getElementById("toelichting").value = data.toelichting;
-                document.getElementById("antwoord"+data.juistantwoord).style.backgroundColor = "lightgreen";
-                document.getElementById("checkbox"+data.juistantwoord).checked = true;
+                setCorrectAnswer(data.juistantwoord);
             }
             function slavraagop(){
                 console.log("sla vraag op")
