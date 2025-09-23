@@ -1,4 +1,4 @@
-"""Core business logic for the refactored StudyTube proof of concept."""
+"""Core business logic for the refactored StudyTube proof of concept.""" 
 
 from __future__ import annotations
 
