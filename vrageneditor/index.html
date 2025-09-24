@@ -88,7 +88,8 @@
                         input.style.backgroundColor = 'white';
                     }
                 });
-                document.getElementById('juistantwoord').value = selectedLetters.join(',');
+                const correctField = document.getElementById('juistantwoord');
+                correctField.value = String(selectedLetters.join(','));
             }
             function parseCorrectAnswerLetters(correctValue){
                 const selectedSet = new Set();
@@ -98,10 +99,11 @@
                             selectedSet.add(letter);
                         }
                     });
-                }else if(typeof correctValue === 'string'){
-                    const matches = correctValue.match(/[a-d]/g);
+                }else if(correctValue !== undefined && correctValue !== null){
+                    const normalized = String(correctValue);
+                    const matches = normalized.match(/[a-d]/gi);
                     if(matches){
-                        matches.forEach(letter => selectedSet.add(letter));
+                        matches.forEach(letter => selectedSet.add(letter.toLowerCase()));
                     }
                 }
                 return selectedSet;
@@ -146,7 +148,7 @@
                 verzendObject.opleidingsnr  = opleidingsnr;
                 verzendObject.vraagsoort    = document.getElementById("vraagsoort").value;
                 verzendObject.niveau        = document.getElementById("niveau").value;
-                verzendObject.juistantwoord = document.getElementById("juistantwoord").value;
+                verzendObject.juistantwoord = String(document.getElementById("juistantwoord").value || '');
                 verzendObject.vraag         = document.getElementById("vraag").value;
                 verzendObject.antwoorda     = document.getElementById("antwoorda").value;
                 verzendObject.antwoordb     = document.getElementById("antwoordb").value;
@@ -190,7 +192,7 @@
                 verzendObject.opleidingsnr  = opleidingsnr;
                 verzendObject.vraagsoort    = document.getElementById("vraagsoort").value;
                 verzendObject.niveau        = document.getElementById("niveau").value;
-                verzendObject.juistantwoord = document.getElementById("juistantwoord").value;
+                verzendObject.juistantwoord = String(document.getElementById("juistantwoord").value || '');
                 verzendObject.vraag         = document.getElementById("vraag").value;
                 verzendObject.antwoorda     = document.getElementById("antwoorda").value;
                 verzendObject.antwoordb     = document.getElementById("antwoordb").value;
