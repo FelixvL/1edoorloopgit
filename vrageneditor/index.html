@@ -28,9 +28,8 @@
                 <input id="checkboxa" type="checkbox" onclick="toggleCorrectAnswer('a')">
                 <span class="answer-checkbox-box">&#10003;</span>
             </label>
-            <div class="answer-controls">
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('a','down')" aria-label="Verplaats antwoord A omlaag">&#9660;</button>
-            </div>
+            <span class="answer-sort-space" aria-hidden="true"></span>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('a','down')" aria-label="Verplaats antwoord A omlaag">&#9660;</button>
         </div>
         <div class="answer-row" id="answer-row-b">
             <input id="antwoordb" class="answer-input">
@@ -38,10 +37,8 @@
                 <input id="checkboxb" type="checkbox" onclick="toggleCorrectAnswer('b')">
                 <span class="answer-checkbox-box">&#10003;</span>
             </label>
-            <div class="answer-controls">
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('b','up')" aria-label="Verplaats antwoord B omhoog">&#9650;</button>
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('b','down')" aria-label="Verplaats antwoord B omlaag">&#9660;</button>
-            </div>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('b','up')" aria-label="Verplaats antwoord B omhoog">&#9650;</button>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('b','down')" aria-label="Verplaats antwoord B omlaag">&#9660;</button>
         </div>
         <div class="answer-row" id="answer-row-c">
             <input id="antwoordc" class="answer-input">
@@ -49,10 +46,8 @@
                 <input id="checkboxc" type="checkbox" onclick="toggleCorrectAnswer('c')">
                 <span class="answer-checkbox-box">&#10003;</span>
             </label>
-            <div class="answer-controls">
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('c','up')" aria-label="Verplaats antwoord C omhoog">&#9650;</button>
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('c','down')" aria-label="Verplaats antwoord C omlaag">&#9660;</button>
-            </div>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('c','up')" aria-label="Verplaats antwoord C omhoog">&#9650;</button>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('c','down')" aria-label="Verplaats antwoord C omlaag">&#9660;</button>
         </div>
         <div class="answer-row" id="answer-row-d">
             <input id="antwoordd" class="answer-input">
@@ -60,9 +55,8 @@
                 <input id="checkboxd" type="checkbox" onclick="toggleCorrectAnswer('d')">
                 <span class="answer-checkbox-box">&#10003;</span>
             </label>
-            <div class="answer-controls">
-                <button type="button" class="answer-sort-button" onclick="moveAnswer('d','up')" aria-label="Verplaats antwoord D omhoog">&#9650;</button>
-            </div>
+            <button type="button" class="answer-sort-button" onclick="moveAnswer('d','up')" aria-label="Verplaats antwoord D omhoog">&#9650;</button>
+            <span class="answer-sort-space" aria-hidden="true"></span>
         </div>
         <textarea id="toelichting" cols="150" rows="6"></textarea>
         <input hidden id="juistantwoord">

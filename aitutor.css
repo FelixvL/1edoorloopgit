@@ -69,9 +69,10 @@ input, textarea, select {
 }
 
 .answer-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(36px, auto) minmax(40px, auto) minmax(40px, auto);
   align-items: center;
-  gap: 16px;
+  column-gap: 16px;
   margin-bottom: 16px;
   width: 100%;
   max-width: 720px;
@@ -89,10 +90,16 @@ input, textarea, select {
   border-color: #87d9ad;
 }
 
-.answer-controls {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
+.answer-checkbox {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+  justify-self: center;
 }
 
 .answer-sort-button {
@@ -106,16 +113,7 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   margin: 0;
-}
-
-.answer-checkbox {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  justify-self: center;
 }
 
 .answer-checkbox input {
@@ -156,6 +154,13 @@ input, textarea, select {
 
 .answer-checkbox input:focus-visible + .answer-checkbox-box {
   box-shadow: 0 0 0 3px rgba(76, 201, 144, 0.35);
+}
+
+.answer-sort-space {
+  width: 40px;
+  height: 40px;
+  display: inline-block;
+  justify-self: center;
 }
 
 textarea {
