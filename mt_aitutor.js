@@ -1,3 +1,37 @@
+const answerLetters = ['a','b','c','d'];
+
+function parseCorrectAnswerLetters(correctValue){
+    const selectedSet = new Set();
+    if(Array.isArray(correctValue)){
+        correctValue.forEach(letter => {
+            if(typeof letter === 'string'){
+                const normalized = letter.toLowerCase();
+                if(answerLetters.includes(normalized)){
+                    selectedSet.add(normalized);
+                }
+            }
+        });
+    }else if(correctValue !== undefined && correctValue !== null){
+        const normalized = String(correctValue);
+        const matches = normalized.match(/[a-d]/gi);
+        if(matches){
+            matches.forEach(letter => selectedSet.add(letter.toLowerCase()));
+        }
+    }
+    return selectedSet;
+}
+
+function escapeHtml(value){
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\r/g, '&#13;')
+        .replace(/\n/g, '&#10;');
+}
+
 function mt_start_systeem(){
     console.log("go");
 //    document.getElementById("beantwoordknop").innerHTML = 'waiting for answer';
@@ -47,13 +81,18 @@ function mt_verwerk_response(data){
             document.getElementById("kennismatrix").innerHTML += "--<br>";
             document.getElementById("kennismatrix").innerHTML += oudetekst;
 }
-        function mt_beantwoord_vraag(elem, antwoordp, correct){
+        function mt_beantwoord_vraag(elem){
             let titeljouwantwoord = document.getElementById("titeljouwantwoord");
             titeljouwantwoord.innerHTML = 'Wachten op volgende vraag!';
             titeljouwantwoord.style.color = 'red';
+            const antwoordp = elem.dataset.answer || '';
+            const correct = elem.dataset.correct === 'true';
             let buttons = document.getElementsByClassName("antwoordbuttons");
             for(let x = 0; x < buttons.length; x++){
                 buttons[x].onclick = ()=>alert("we wachten op de volgende vraag");
+                if(buttons[x] !== elem && buttons[x].dataset.correct === 'true'){
+                    buttons[x].style.backgroundColor = 'lightgreen';
+                }
             }
             elem.style.backgroundColor = correct ? 'lightgreen' : 'salmon';
             const user_id = document.getElementById("kandidaatnr").value;
@@ -68,13 +107,17 @@ function mt_verwerk_response(data){
 function toonAntwoordKnoppen(data){
     let letters= [data.antwoorda,data.antwoordb,data.antwoordc,data.antwoordd];
     let antwoordletter = ["a", "b", "c", "d"]
+    const correctLetters = parseCorrectAnswerLetters(data.correct_antwoord);
     let returnString = "";
     for(let x = 0; x<4; x++){
-        console.log(data.correct_antwoord)
-        if(letters[x] != "undefined"){
-            returnString += `<div><button class="antwoordbuttons" onclick="mt_beantwoord_vraag(this, '${letters[x]}', ${antwoordletter[x] == data.correct_antwoord})">${antwoordletter[x]}) ${letters[x]}</button></div><br>`
+        const rawAnswer = letters[x];
+        if(rawAnswer !== undefined && rawAnswer !== null && rawAnswer !== "undefined" && rawAnswer !== ""){
+            const letter = antwoordletter[x];
+            const isCorrect = correctLetters.has(letter);
+            const safeAnswer = escapeHtml(rawAnswer);
+            returnString += `<div><button class="antwoordbuttons" data-letter="${letter}" data-answer="${safeAnswer}" data-correct="${isCorrect}" onclick="mt_beantwoord_vraag(this)">${letter}) ${safeAnswer}</button></div><br>`;
         }
-    }    
+    }
     return returnString;
 }
 function maakrapportage(){
