@@ -22,10 +22,48 @@
         <h2>Vraag</h2>
         <textarea id="vraag" cols="150" rows="6"></textarea>
         <br><br>
-        <input id="antwoorda" size="150"><input id="checkboxa" type=checkbox onclick="toggleCorrectAnswer('a')"><button type="button" onclick="moveAnswer('a','down')">v</button><br>
-        <input id="antwoordb" size="150"><input id="checkboxb" type=checkbox onclick="toggleCorrectAnswer('b')"><button type="button" onclick="moveAnswer('b','up')">^</button><button type="button" onclick="moveAnswer('b','down')">v</button><br>
-        <input id="antwoordc" size="150"><input id="checkboxc" type=checkbox onclick="toggleCorrectAnswer('c')"><button type="button" onclick="moveAnswer('c','up')">^</button><button type="button" onclick="moveAnswer('c','down')">v</button><br>
-        <input id="antwoordd" size="150"><input id="checkboxd" type=checkbox onclick="toggleCorrectAnswer('d')"><button type="button" onclick="moveAnswer('d','up')">^</button>
+        <div class="answer-row" id="answer-row-a">
+            <input id="antwoorda" class="answer-input">
+            <label class="answer-checkbox" aria-label="Markeer antwoord A als correct">
+                <input id="checkboxa" type="checkbox" onclick="toggleCorrectAnswer('a')">
+                <span class="answer-checkbox-box">&#10003;</span>
+            </label>
+            <div class="answer-controls">
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('a','down')" aria-label="Verplaats antwoord A omlaag">&#9660;</button>
+            </div>
+        </div>
+        <div class="answer-row" id="answer-row-b">
+            <input id="antwoordb" class="answer-input">
+            <label class="answer-checkbox" aria-label="Markeer antwoord B als correct">
+                <input id="checkboxb" type="checkbox" onclick="toggleCorrectAnswer('b')">
+                <span class="answer-checkbox-box">&#10003;</span>
+            </label>
+            <div class="answer-controls">
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('b','up')" aria-label="Verplaats antwoord B omhoog">&#9650;</button>
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('b','down')" aria-label="Verplaats antwoord B omlaag">&#9660;</button>
+            </div>
+        </div>
+        <div class="answer-row" id="answer-row-c">
+            <input id="antwoordc" class="answer-input">
+            <label class="answer-checkbox" aria-label="Markeer antwoord C als correct">
+                <input id="checkboxc" type="checkbox" onclick="toggleCorrectAnswer('c')">
+                <span class="answer-checkbox-box">&#10003;</span>
+            </label>
+            <div class="answer-controls">
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('c','up')" aria-label="Verplaats antwoord C omhoog">&#9650;</button>
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('c','down')" aria-label="Verplaats antwoord C omlaag">&#9660;</button>
+            </div>
+        </div>
+        <div class="answer-row" id="answer-row-d">
+            <input id="antwoordd" class="answer-input">
+            <label class="answer-checkbox" aria-label="Markeer antwoord D als correct">
+                <input id="checkboxd" type="checkbox" onclick="toggleCorrectAnswer('d')">
+                <span class="answer-checkbox-box">&#10003;</span>
+            </label>
+            <div class="answer-controls">
+                <button type="button" class="answer-sort-button" onclick="moveAnswer('d','up')" aria-label="Verplaats antwoord D omhoog">&#9650;</button>
+            </div>
+        </div>
         <textarea id="toelichting" cols="150" rows="6"></textarea>
         <input hidden id="juistantwoord">
         <div id="toelichtingsdiv">
@@ -80,12 +118,14 @@
                 const selectedLetters = [];
                 answerLetters.forEach(letter => {
                     const checkbox = document.getElementById('checkbox'+letter);
-                    const input = document.getElementById('antwoord'+letter);
-                    if(checkbox.checked){
-                        input.style.backgroundColor = 'lightgreen';
+                    const row = document.getElementById('answer-row-'+letter);
+                    if(checkbox && checkbox.checked){
+                        if(row){
+                            row.classList.add('answer-row--correct');
+                        }
                         selectedLetters.push(letter);
-                    }else{
-                        input.style.backgroundColor = 'white';
+                    }else if(row){
+                        row.classList.remove('answer-row--correct');
                     }
                 });
                 const correctField = document.getElementById('juistantwoord');
