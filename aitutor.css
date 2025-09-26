@@ -75,7 +75,7 @@ input, textarea, select {
   column-gap: 16px;
   margin-bottom: 16px;
   width: 100%;
-  max-width: 720px;
+  max-width: 1024px;
 }
 
 .answer-input {
