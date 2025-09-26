@@ -1,0 +1,128 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --color-bg: #0a3d62;
+  --color-slot: #1e90ff;
+  --color-player1: #ff4757;
+  --color-player2: #ffd32a;
+  --color-text: #f5f6fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1e90ff 0%, #0a3d62 60%, #001f3f 100%);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.app {
+  text-align: center;
+  max-width: 480px;
+  width: min(100%, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+#status {
+  font-size: 1.1rem;
+  background-color: rgba(0, 0, 0, 0.25);
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+button {
+  cursor: pointer;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+button:hover,
+button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.35);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 1.25rem rgba(0, 0, 0, 0.4), 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, #ffffff 0%, var(--color-slot) 45%, #08233a 100%);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.cell:hover {
+  transform: translateY(-3px);
+}
+
+.disc {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  transform: translateY(-120%);
+  transition: transform 0.25s ease;
+}
+
+.cell.filled .disc {
+  transform: translateY(0);
+}
+
+.cell.player1 .disc {
+  background: radial-gradient(circle at 30% 30%, #ffeaa7 0%, var(--color-player1) 45%, #a01826 100%);
+}
+
+.cell.player2 .disc {
+  background: radial-gradient(circle at 30% 30%, #fff6a3 0%, var(--color-player2) 45%, #b78600 100%);
+}
+
+.cell.winning .disc {
+  box-shadow: 0 0 0 0.35rem rgba(255, 255, 255, 0.65), 0 0 1.5rem rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 520px) {
+  .board {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+}
