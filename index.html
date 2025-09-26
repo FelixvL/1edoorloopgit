@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vier op een Rij</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <h1>Vier op een Rij</h1>
+        <p class="app__description">
+          Laat de schijven vallen en probeer vier op een rij te krijgen voordat je tegenstander dat doet!
+        </p>
+      </header>
+
+      <section class="status">
+        <p id="turn-indicator" class="status__indicator" aria-live="polite"></p>
+        <button id="reset-button" class="status__reset" type="button">Nieuw spel</button>
+      </section>
+
+      <section class="board" aria-label="Speelbord">
+        <div id="board" class="board__grid" role="grid"></div>
+      </section>
+    </main>
+
+    <template id="cell-template">
+      <button class="cell" role="gridcell" aria-label="Lege cel" data-column></button>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
