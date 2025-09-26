@@ -1,0 +1,155 @@
+.game-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.game-card {
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 540px;
+  width: 100%;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  letter-spacing: 0.04em;
+}
+
+header p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #cbd5f5;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #1d4ed8, #0ea5e9);
+  box-shadow: inset 0 8px 12px rgba(255, 255, 255, 0.25), inset 0 -8px 16px rgba(2, 6, 23, 0.5);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.column.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.column:focus-visible {
+  box-shadow: 0 0 0 4px rgba(239, 246, 255, 0.6);
+  border-radius: 14px;
+}
+
+.cell {
+  width: clamp(48px, 7vw, 64px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(148, 163, 184, 0.4), rgba(30, 41, 59, 0.85));
+  position: relative;
+  box-shadow: inset 0 6px 10px rgba(148, 163, 184, 0.35), inset 0 -6px 10px rgba(15, 23, 42, 0.75);
+  transition: transform 150ms ease-in-out;
+}
+
+.cell.last-move::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid rgba(250, 204, 21, 0.9);
+  pointer-events: none;
+}
+
+.cell.red,
+.cell.yellow {
+  background: none;
+  box-shadow: none;
+}
+
+.cell.red::before,
+.cell.yellow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 8px 12px rgba(255, 255, 255, 0.35), inset 0 -8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.cell.red::before {
+  background: radial-gradient(circle at 30% 30%, #fca5a5, #dc2626);
+}
+
+.cell.yellow::before {
+  background: radial-gradient(circle at 30% 30%, #fef08a, #f59e0b);
+}
+
+.preview {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  opacity: 0.75;
+  transform: scale(0.85);
+  transition: transform 120ms ease-in-out, opacity 120ms ease-in-out;
+  box-shadow: inset 0 6px 10px rgba(255, 255, 255, 0.3), inset 0 -6px 10px rgba(0, 0, 0, 0.25);
+}
+
+.preview.red {
+  background: radial-gradient(circle at 30% 30%, rgba(248, 113, 113, 0.9), rgba(220, 38, 38, 0.85));
+}
+
+.preview.yellow {
+  background: radial-gradient(circle at 30% 30%, rgba(253, 224, 71, 0.9), rgba(217, 119, 6, 0.85));
+}
+
+footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+button {
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f97316, #facc15);
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 120ms ease-in-out, box-shadow 120ms ease-in-out;
+}
+
+button:hover,
+button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(250, 204, 21, 0.35);
+}
+
+@media (max-width: 600px) {
+  .game-card {
+    padding: 1.5rem;
+  }
+
+  .board {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+}
